@@ -1,0 +1,24 @@
+sudo: required
+language: generic
+
+services:
+  - docker
+
+before_install:
+  - docker build -t saritah/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true saritah/react-test npm test
+
+after_success:
+  - docker build -t saritah/multi-client ./client
+  - docker build -t saritah/multi-nginx ./nginx
+  - docker build -t saritah/multi-server ./server
+  - docker build -t saritah/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push saritah/multi-client
+  - docker push saritah/multi-nginx
+  - docker push saritah/multi-server
+  - docker push saritah/multi-worker
